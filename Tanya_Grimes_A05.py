@@ -1,3 +1,4 @@
+# !/usr/local/bin/python
 # -*- coding: utf-8 -*-
 """
 PROG8420 - Programming for Big Data
@@ -8,10 +9,9 @@ Created on Wed Jul 29 16:40:46 2020
 
 @author: Tanya Grimes
 
-References:
-    Additional learning materials:
-    * https://numpy.org/doc/stable/reference/generated/numpy.unique.html
-    * https://www.programiz.com/python-programming/methods/built-in/zip
+Additional learning materials:
+* https://numpy.org/doc/stable/reference/generated/numpy.unique.html
+* https://www.programiz.com/python-programming/methods/built-in/zip
 """
 
 
@@ -42,7 +42,6 @@ roll_num = 0
 events_num = 0
 
 outcomes = {
-    'total': np.arange(1, DIE_RANGE_END, dtype=int),
     'u_total': np.empty(0),
     't_likelihood': np.empty(0),
     'a_actual': np.empty(0),
@@ -56,10 +55,7 @@ outcomes = {
 def run_simulation():
     # starts the simulation steps
     
-    # calls to generate sum of outcomes
-    prepare_outcomes_total()
-        
-    # calls to generate theoretical likelihood
+    # calls to generate die face sums and theoretical likelihood
     generate_outcomes_likelihood()
     
     # calls to generate simualtion of actual rolls
@@ -71,50 +67,50 @@ def run_simulation():
     # print simulation result
     display_simulation_results()
 
-        
-def prepare_outcomes_total():
-    # calls to generate outcome totals, based on dice user input
-    
-    global outcomes
-    
-    # loop through to add to outcome total list
-    for d in range(1, die_num):
-        outcomes['total'] = generate_outcomes_total()
-  
-            
-def generate_outcomes_total():
-    # generates a list of new totals from previous list
-    
-    total_each_outcome = np.empty(0)
-    
-    for f in range(1, DIE_RANGE_END):
-        for l in outcomes['total']:
-            total = f + l
-            total_each_outcome = np.append(total_each_outcome, total)
-    
-    return total_each_outcome
-
 
 def generate_outcomes_likelihood():
-    # generates list of theoretical likelihood as a percentage
+    # generates unique array of die face sums
+    # generates array of theoretical likelihood as a percentage
+    # uses excel-like approach, with leading zeros and a moving total
+    # for a faster result, especially with die numbers above 6.
     
     global outcomes
     
-    # stores two arrays: one for unique theoretical sums, one for frequency of each sum
-    t_unique, t_frequency = np.unique(outcomes['total'], return_counts = True)
-        
+    # generates array of all die face sums
+    outcomes['u_total'] = np.arange(die_num, die_num * DIE_SIDES + 1)
+    
     # at larger values, the likelihood can get truncated
     rounded = 2 if die_num < 6 else 4
     
-    # generates the theoretical likelihood of the sums
-    t_likelihood = np.round(t_frequency / events_num * 100, rounded)
+    # arrays to seed the loop
+    zero_arr = np.zeros(5)
+    like_arr = np.append(zero_arr, [1])
     
-    outcomes['t_likelihood'] = t_likelihood
-    outcomes['u_total'] = t_unique
+    # loops through until the die_num is reached, because likelihood
+    # calculations are dependent on the previous set of calculations
+    for d in range(die_num):
+        side_ct = 6
+        curr_arr = np.empty(0)
+        
+        # loops through each item in the array and collects each sum
+        # of a moving range of 6 items as the array is traversed
+        for i, r in enumerate(like_arr):
+            curr_val = np.sum(like_arr[i:side_ct]) / DIE_SIDES
+            curr_arr = np.append(curr_arr, curr_val)
+            side_ct += 1
+        
+        if d == die_num - 1:
+            outcomes['t_likelihood'] = np.round(curr_arr * 100, rounded)
+        else :
+            # if the outer loop value does not match the die number,
+            # overwrite like_arr with zeros and the new curr_arr to run again
+            like_arr = np.empty(0)
+            like_arr = np.append(zero_arr, curr_arr)
+    
     
 
 def generate_outcomes_actual():
-    # generates list of actual appearance of values as a percentage
+    # generates array of actual appearance of values as a percentage
     
     global outcomes
     
@@ -125,7 +121,7 @@ def generate_outcomes_actual():
     a_sim_die_rolls = np.random.randint(1, DIE_RANGE_END, (die_num, roll_num))
     
     # calculates sum of the dice rolls
-    a_sim_die_rsum = np.sum(a_sim_die_rolls, axis=0)
+    a_sim_die_rsum = np.sum(a_sim_die_rolls, axis = 0)
     
     # stores two arrays: one for unique simulated sums, one for frequency of each sum
     a_unique, a_frequency = np.unique(a_sim_die_rsum, return_counts = True)
@@ -137,18 +133,16 @@ def generate_outcomes_actual():
     a_actual = np.zeros(len(t_unique))
     
     # generates an array for the simulation including sums with 0 output
-    s = 0
-    for dsum in t_unique:
+    for s, dsum in enumerate(t_unique):
         for key in a_sim_frequency:
             if dsum == key:
                 a_actual[s] = round(a_sim_frequency[key] / roll_num * 100, 2)
-        s += 1
-        
+            
     outcomes['a_actual'] = a_actual
     
     
 def generate_percentage_error():
-    # generates list of percentage errors
+    # generates array of percentage errors
     
     global outcomes
     
@@ -167,7 +161,7 @@ def display_simulation_results():
     display_arr = np.append(display_arr, outcomes['e_percentage'])
     
     # determine number of rows for simulation, based on number of dice selected
-    row_num = len(outcomes['total']) if die_num == 1 else len(outcomes['u_total'])
+    row_num = len(outcomes['u_total'])
     
     # generate matrix of arrays, populating by column instead of row
     display_matrix = np.reshape(display_arr, (row_num, 4), 'F')
@@ -197,8 +191,6 @@ print('* Enter the number of dice to use, and the number of rolls the')
 print('  dice should make.\n')
 print('* A summary of the simulation will be generated afterwards.\n')
 print('* The number of dice chosen should be between 1 and 8 inclusive.\n')
-print('* A larger dice number will increase the time to simulate,')
-print('* especially after 6 dice.\n')
 print('* Trailing and leading spaces will be removed from your input.\n')
 print('* Only positive integers are allowed.')
 print('-----------------------------------------------------------------')
