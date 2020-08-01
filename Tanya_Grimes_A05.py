@@ -191,6 +191,7 @@ print('* Enter the number of dice to use, and the number of rolls the')
 print('  dice should make.\n')
 print('* A summary of the simulation will be generated afterwards.\n')
 print('* The number of dice chosen should be between 1 and 8 inclusive.\n')
+print('* The number of rolls to make should not exceed 10,000,000.\n')
 print('* Trailing and leading spaces will be removed from your input.\n')
 print('* Only positive integers are allowed.')
 print('-----------------------------------------------------------------')
@@ -220,15 +221,18 @@ elif (die_input.isnumeric() and die_input.find('.') == -1) or (die_input[0] == '
             roll_num = int(roll_input)
             
             if roll_num > 0:
-                # stores total number of outcomes, from the number of dice selected
-                events_num = DIE_SIDES ** die_num
                 
-                # calls to start the simulation process
-                run_simulation()
+                # additional check to prevent memory issues
+                if roll_num <= 10000000:
+                    
+                    # stores total number of outcomes, from the number of dice selected
+                    events_num = DIE_SIDES ** die_num
+                    
+                    # calls to start the simulation process
+                    run_simulation()
+                    
+                else: print('   Roll input should not exceed 10,000,000. Exiting simulation...\n')
             else: print('   Roll input should be greater than 0. Exiting simulation...\n')
-        else:
-            print('   Roll input is not valid. Exiting simulation...\n')
-    else:
-        print('   Dice input should be between 1 and 8, inclusive. Exiting simulation...\n')
-else:
-    print('   Dice input is not valid. Exiting simulation...\n')
+        else: print('   Roll input is not valid. Exiting simulation...\n')
+    else: print('   Dice input should be between 1 and 8, inclusive. Exiting simulation...\n')
+else: print('   Dice input is not valid. Exiting simulation...\n')
