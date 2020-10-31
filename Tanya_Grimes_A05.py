@@ -3,7 +3,7 @@
 """
 PROG8420 - Programming for Big Data
 
-Assignment 05
+Dice Roll Simulation
 
 Created on Wed Jul 29 16:40:46 2020
 
